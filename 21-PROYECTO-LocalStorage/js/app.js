@@ -1,81 +1,117 @@
-// Espera a que se cargue el documento
-document.addEventListener('DOMContentLoaded', function() {
-    // Obtiene elementos del DOM
-    const formulario = document.getElementById('formulario');
-    const mensajeInput = document.getElementById('mensaje');
-    const listaMensajes = document.getElementById('lista-mensajes');
+//Selectores y Listeners
+document.addEventListener("DOMContentLoaded", () => {
 
-    // Carga los mensajes almacenados en el localStorage al cargar la página
-    cargarMensajes();
+  //Obejto
 
-    // Agregar un evento de envío de formulario
-    formulario.addEventListener('submit', function(e) {
-        e.preventDefault(); // Evita que se recargue la página
+  const emailOBJ = {
+    email:"",
+    asunto:"",
+    mensaje:"",
+  } 
 
-        const mensaje = mensajeInput.value;
+  const email = document.querySelector("#email")
+  const asunto = document.querySelector("#asunto")
+  const mensaje = document.querySelector("#mensaje")
+  const formulario = document.querySelector("#formulario")
+  const btnSubmit = document.querySelector('#formulario button[type="submit"]')
+  const btnRemove =  document.querySelector('#formulario button[type="reset"]')
+  const spinner = document.querySelector("#spinner")
 
-        if (mensaje.trim() !== '') {
-            // Agregar el mensaje al contenedor
-            agregarMensaje(mensaje);
+  email.addEventListener("blur", validar) 
+  asunto.addEventListener("blur", validar)
+  mensaje.addEventListener("blur", validar)
+  formulario.addEventListener("submit", activarSpinner)
+  btnRemove.addEventListener("click", (e) => {
+    e.preventDefault()
+    emailOBJ.email=""
+    emailOBJ.asunto=""
+    emailOBJ.mensaje=""
+    formulario.reset()
+    comprobarEmail()
+  })
+  
+  function activarSpinner(e) {
+    e.preventDefault()
+    spinner.classList.add("flex")
+    spinner.classList.remove("hidden")
 
-            // Almacena el mensaje en el localStorage
-            almacenarMensaje(mensaje);
+    setTimeout(()=> {
+      spinner.classList.remove("flex")
+      spinner.classList.add("hidden")
 
-            // Limpia el campo de entrada
-            mensajeInput.value = '';
-        }
-    });
+      // Creamos una alerta
+      const confirmar = document.createElement("P")
+      confirmar.classList.add("bg-green-500", "text-white", "p-2", "text-center", "rounded-lg", "mt-10", "font-bold", "text-sm", "uppercase")
+      confirmar.textContent = "Cliente agregado correctamente"
+      // Lo insertamos al final del formulario
+      formulario.appendChild(confirmar)
 
-    // Función para agregar un mensaje al contenedor
-    function agregarMensaje(mensaje) {
-        const nuevoMensaje = document.createElement('div');
-        nuevoMensaje.textContent = mensaje;
-    // Crear un botón de eliminación y adjuntarlo al mensaje
-        const botonEliminar = document.createElement('button');
-        botonEliminar.textContent = 'Eliminar';
-        botonEliminar.addEventListener('click', function() {
-            borrarMensaje(nuevoMensaje, mensaje);
-        });
+      // El mensaje se queda siempre, ponemos otrro setTimeout para quitarlo.
+      setTimeout(()=> {
+        confirmar.remove()
+      },3000)
 
-        nuevoMensaje.appendChild(botonEliminar);
-        listaMensajes.appendChild(nuevoMensaje);
+    }, 3000)
+  }
+
+  function resetForm() {
+    emailOBJ.email=""
+    emailOBJ.asunto=""
+    emailOBJ.mensaje=""
+    formulario.reset()
+  }
+
+  function validar(e) {
+    if(e.target.value.trim() === "") {
+      mostrarAlerta(`El campo ${e.target.id} es obligatorio`, e.target.parentElement)
+      emailOBJ[e.target.name] = ""
+      comprobarEmail()
+      return
     }
-
-    // Función para eliminar un mensaje
-    function borrarMensaje(mensajeElement, mensaje) {
-        mensajeElement.remove();
-        eliminarMensaje(mensaje);
+    if (e.target.id === "email" && !validarEmail(e.target.value)){
+      mostrarAlerta(`El email no es valido`, e.target.parentElement)
+      comprobarEmail()
+      return
     }
+    limpiarAlerta(e.target.parentElement)
 
-    // Función para cargar mensajes almacenados en el localStorage
-    function cargarMensajes() {
-        const mensajes = obtenerMensajes();
 
-        mensajes.forEach(function(mensaje) {
-            agregarMensaje(mensaje);
-        });
+    emailOBJ[e.target.name] = e.target.value.trim().toLowerCase()
+    comprobarEmail(emailOBJ)
+  }
+
+  function comprobarEmail() {
+    const values = Object.values(emailOBJ)
+    console.log(values)
+    //Activar boton
+    if (values.includes("")){
+      btnSubmit.classList.add("opacity-50")
+      btnSubmit.disabled = true
+    } else {
+      btnSubmit.classList.remove("opacity-50")
+      btnSubmit.disabled = false
     }
+  }
 
-    // Función para obtener mensajes del localStorage
-    function obtenerMensajes() {
-        const mensajes = JSON.parse(localStorage.getItem('mensajes')) || [];
-        return mensajes;
-    }
+  function limpiarAlerta(referencia) {
+      const alerta = referencia.querySelector(".bg-red-600") 
+      if (alerta) {
+        alerta.remove()
+      }
+  }
 
-    // Función para almacenar un mensaje en el localStorage
-    function almacenarMensaje(mensaje) {
-        const mensajes = obtenerMensajes();
-        mensajes.push(mensaje);
-        localStorage.setItem('mensajes', JSON.stringify(mensajes));
-    }
+  function mostrarAlerta(mensaje, referencia) {
+    limpiarAlerta(referencia)
+    const error = document.createElement("P")
+    error.textContent = mensaje
+    error.classList.add("bg-red-600", "text-center", "text-white", "p-2")
+    referencia.appendChild(error)
+  }
 
-    // Función para eliminar un mensaje del localStorage
-    function eliminarMensaje(mensaje) {
-        const mensajes = obtenerMensajes();
-        const index = mensajes.indexOf(mensaje);
-        if (index !== -1) {
-            mensajes.splice(index, 1);
-            localStorage.setItem('mensajes', JSON.stringify(mensajes));
-        }
-    }
-});
+  function validarEmail(email){
+    regex = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+    resultado = regex.test(email)
+    return resultado
+  }
+
+})
